@@ -1,0 +1,19 @@
+# Example metadata.csv format for local audio files
+# Place this file in the same directory as your audio files
+# 
+# Column 'audio': filename or path to audio file
+# Column 'text': transcription text
+#
+# Supported formats: WAV, MP3, FLAC, OGG, M4A, AAC, WMA
+
+audio,text
+sample001.wav,"Hola, ¿cómo estás hoy?"
+sample002.mp3,"Buenos días, bienvenido"
+sample003.flac,"Gracias por tu ayuda"
+sample004.wav,"¿Dónde está la estación de tren?"
+sample005.mp3,"Me gustaría reservar una mesa para dos personas"
+sample006.wav,"El clima está muy agradable"
+sample007.flac,"Por favor, ayúdame con mi equipaje"
+sample008.mp3,"¿Cuánto cuesta este producto?"
+sample009.wav,"Necesito un médico urgentemente"
+sample010.flac,"La reunión comienza a las tres"

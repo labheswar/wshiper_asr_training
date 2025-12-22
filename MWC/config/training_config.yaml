@@ -1,0 +1,197 @@
+# MWC ASR Training Configuration
+# Modular Whisper Configuration for Production ASR Training
+# Last Updated: December 19, 2025
+
+# ============================================================================
+# DATA CONFIGURATION - PLUG AND PLAY
+# ============================================================================
+data:
+  # Path to audio files - CHANGE THIS FOR DIFFERENT DEPLOYMENTS
+  audio_path: "/data/V2V/en_sp/V4_Arpit/data/asr_samples"  # Default path
+  # Alternative: Use HuggingFace dataset
+  use_huggingface: true
+  huggingface_dataset: "MrDragonFox/Elise"
+  huggingface_split: "train"
+  
+  # Audio format support
+  supported_formats:
+    - "wav"
+    - "mp3"
+    - "flac"
+    - "ogg"
+    - "m4a"
+    - "aac"
+    - "wma"
+  
+  # Audio preprocessing
+  target_sample_rate: 16000
+  normalize_audio: true
+  remove_silence: false
+  max_duration_seconds: 30  # Maximum audio length
+  min_duration_seconds: 0.5  # Minimum audio length
+  
+  # Dataset split
+  train_split_ratio: 0.9
+  validation_split_ratio: 0.1
+  random_seed: 42
+  
+  # Text field (for custom datasets)
+  text_column: "text"  # Column name containing transcription
+  audio_column: "audio"  # Column name containing audio
+
+# ============================================================================
+# MODEL CONFIGURATION
+# ============================================================================
+model:
+  # Base model selection
+  base_model: "openai/whisper-large-v3"
+  language: "spanish"
+  task: "transcribe"
+  
+  # Teacher model for distillation (optional)
+  use_distillation: true
+  teacher_model: "openai/whisper-large-v3"  # Can be same or different
+  distillation_temperature: 2.0
+  distillation_alpha: 0.5  # Weight for distillation loss (0.5 = 50% distillation, 50% hard labels)
+  
+  # Quantization
+  use_4bit_quantization: true
+  bnb_4bit_quant_type: "nf4"  # nf4 or fp4
+  bnb_4bit_compute_dtype: "float16"  # Keep for efficiency, will convert layers to float32
+  bnb_4bit_use_double_quant: true
+  
+  # LoRA Configuration
+  lora_r: 16  # Rank (higher = more parameters, better quality)
+  lora_alpha: 32
+  lora_dropout: 0.1
+  lora_target_modules:
+    - "q_proj"
+    - "v_proj"
+    - "k_proj"
+    - "out_proj"
+    - "fc1"
+    - "fc2"
+  lora_bias: "none"
+  
+# ============================================================================
+# TRAINING CONFIGURATION
+# ============================================================================
+training:
+  # Training parameters
+  num_epochs: 50
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 8
+  gradient_accumulation_steps: 4  # Effective batch size = 4 * 4 = 16
+  
+  # Learning rate
+  learning_rate: 0.00005
+  warmup_steps: 500
+  lr_scheduler_type: "cosine"  # linear, cosine, polynomial
+  weight_decay: 0.01
+  
+  # Optimization
+  optimizer: "adamw_torch"  # adamw_torch, adamw_8bit, adafactor
+  gradient_checkpointing: true
+  max_grad_norm: 1.0
+  
+  # Mixed precision - DISABLED for 4-bit quantization compatibility
+  fp16: false  # Must be false when using 4-bit quantization
+  bf16: false
+  
+  # Evaluation
+  eval_strategy: "steps"
+  eval_steps: 100
+  save_strategy: "steps"
+  save_steps: 100  # Save every 100 steps (same as eval_steps)
+  
+  # Logging
+  logging_steps: 10
+  logging_first_step: true
+  report_to: []  # tensorboard, wandb, none (empty = no reporting)
+  
+  # Generation settings for evaluation
+  predict_with_generate: true
+  generation_max_length: 225
+  
+  # Best model tracking
+  load_best_model_at_end: true
+  metric_for_best_model: "wer"
+  greater_is_better: false
+  
+  # Reproducibility
+  seed: 42
+
+# ============================================================================
+# CHECKPOINT CONFIGURATION
+# ============================================================================
+checkpoints:
+  # Checkpoint saving
+  output_dir: "models/checkpoints"
+  checkpoint_format: "safetensors"  # safetensors or pytorch
+  save_every_n_epochs: 5
+  keep_best_n_checkpoints: 3
+  keep_last_n_checkpoints: 2
+  
+  # Resume from checkpoint
+  resume_from_checkpoint: null  # Path to checkpoint or null
+  
+# ============================================================================
+# EXPORT CONFIGURATION
+# ============================================================================
+export:
+  # Final model export
+  final_model_dir: "models/final"
+  
+  # Export formats
+  export_safetensors: true
+  export_onnx: true
+  export_pytorch: true
+  
+  # ONNX settings
+  onnx_opset_version: 14
+  onnx_optimize: true
+  onnx_quantize: false  # INT8 quantization for ONNX
+  
+# ============================================================================
+# EVALUATION METRICS
+# ============================================================================
+metrics:
+  # Metrics to compute
+  compute_wer: true  # Word Error Rate
+  compute_cer: true  # Character Error Rate
+  compute_bleu: true  # BLEU score
+  compute_chrf: true  # chrF score
+  
+  # Real-time metrics logging
+  log_predictions: true
+  num_predictions_to_log: 10
+
+# ============================================================================
+# HARDWARE CONFIGURATION
+# ============================================================================
+hardware:
+  # Device settings
+  device: "cuda"  # cuda, cpu, mps
+  num_workers: 4
+  pin_memory: true
+  
+  # Memory optimization
+  dataloader_prefetch_factor: 2
+  empty_cache_steps: 100  # Clear cache every N steps
+  
+# ============================================================================
+# PATHS (Relative to project root)
+# ============================================================================
+paths:
+  # Base paths
+  project_root: "/data/V2V/en_sp/V4_Arpit/MWC"
+  
+  # Output paths
+  logs_dir: "logs/training"
+  eval_logs_dir: "logs/evaluation"
+  tensorboard_dir: "logs/tensorboard"
+  
+  # Model paths
+  models_dir: "models"
+  checkpoints_dir: "models/checkpoints"
+  final_models_dir: "models/final"
