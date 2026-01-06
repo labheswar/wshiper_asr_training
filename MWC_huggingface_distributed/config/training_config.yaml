@@ -1,0 +1,152 @@
+# MWC ASR Training Configuration - Parquet Directory Mode
+# Last Updated: December 22, 2025
+
+# ============================================================================
+# DATA CONFIGURATION
+# ============================================================================
+data:
+  source_type: "parquet"
+  
+  # Parquet directory configuration
+  parquet:
+    file_path: "/opt/app-root/src/data/datasets/mls-speech/clean"  # Directory containing parquet files
+    audio_column: "audio"  # Column with embedded audio bytes
+    text_column: "text"  # Column with transcriptions
+    max_parquet_files: 200  # Limit number of parquet files (null = all, or specify number like 2, 10, etc.)
+  
+  # Audio preprocessing
+  target_sample_rate: 16000
+  max_duration_seconds: 30
+  min_duration_seconds: 0.5
+  
+  # Dataset split
+  train_split_ratio: 0.9
+  validation_split_ratio: 0.1
+  random_seed: 42
+
+# ============================================================================
+# MODEL CONFIGURATION
+# ============================================================================
+model:
+  base_model: "openai/whisper-large-v3"
+  language: "english"
+  task: "transcribe"
+  
+  # Quantization & LoRA
+  use_4bit_quantization: true
+  bnb_4bit_compute_dtype: "float16"
+  bnb_4bit_quant_type: "nf4"
+  bnb_4bit_use_double_quant: true
+  lora_r: 16
+  lora_alpha: 32
+  lora_dropout: 0.1
+  lora_target_modules: ["q_proj", "v_proj"]
+  lora_bias: "none"
+  
+# ============================================================================
+# TRAINING CONFIGURATION
+# ============================================================================
+training:
+  num_epochs: 100
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 8
+  gradient_accumulation_steps: 4
+  learning_rate: 0.00005
+  warmup_steps: 500
+  lr_scheduler_type: "cosine"
+  weight_decay: 0.01
+  optimizer: "paged_adamw_8bit"
+  gradient_checkpointing: true
+  max_grad_norm: 1.0
+  fp16: false
+  bf16: false
+  
+  # Evaluation
+  eval_strategy: "steps"
+  eval_steps: 100
+  save_strategy: "steps"
+  save_steps: 100
+  
+  # Logging
+  logging_steps: 10
+  logging_first_step: true
+  report_to: []
+  
+  # Generation & best model
+  predict_with_generate: true
+  generation_max_length: 225
+  load_best_model_at_end: true
+  metric_for_best_model: "wer"
+  greater_is_better: false
+  seed: 42
+
+# Early stopping configuration
+  early_stopping:
+    enabled: true  # Enable/disable early stopping
+    patience: 3  # Number of evaluations with no improvement before stopping
+    threshold: 0.0  # Minimum improvement required (for WER: smaller is better, so negative threshold means must decrease by this amount)
+
+  # Distributed training configuration
+  distributed_strategy: "ddp"  # Options: ddp (DistributedDataParallel), fsdp (FullyShardedDataParallel)
+  ddp_backend: "nccl"  # NCCL backend for NVIDIA GPUs (optimal for H100 NVL)
+  ddp_find_unused_parameters: false  # Set true only if model has unused parameters (slower)
+  
+  # FSDP configuration (uncomment and configure if using FSDP for very large models)
+  # fsdp_config:
+  #   fsdp_transformer_layer_cls_to_wrap: "WhisperEncoderLayer"
+  #   fsdp_backward_prefetch: "backward_pre"
+  #   fsdp_state_dict_type: "full_state_dict"
+  #   fsdp_offload_params: false
+
+
+# ============================================================================
+# HARDWARE CONFIGURATION
+# ============================================================================
+hardware:
+  device: "cuda"  # cuda, cpu, mps
+  num_workers: 4  # auto = use all available CPU cores
+  dataloader_num_workers: 4  # auto = use all available CPU cores
+  pin_memory: true
+  
+# ============================================================================
+# PATHS
+# ============================================================================
+paths:
+  output_dir: "/opt/app-root/src/data/Mavenir_test/MWC_huggingface/models/500parquet/checkpoints"
+  final_model_dir: "/opt/app-root/src/data/Mavenir_test/MWC_huggingface/models/500parquet/final"
+  logs_dir: "/opt/app-root/src/data/Mavenir_test/MWC_huggingface/logs/training/500parquet"
+
+
+# ============================================================================
+# EXPORT CONFIGURATION
+# ============================================================================
+export:
+  # Final model export directory
+  final_model_dir: "/opt/app-root/src/data/Mavenir_test/MWC_huggingface/models/500parquet/final"
+  
+  # Export formats
+  export_safetensors: true
+  export_onnx: true
+  export_pytorch: true
+  
+  # ONNX settings
+  onnx_opset_version: 14
+  onnx_optimize: true
+  onnx_quantize_fp16: true  # FP16 quantization for ONNX
+  onnx_quantize_int8: false  # INT8 quantization for ONNX
+
+
+# ============================================================================
+# METRICS CONFIGURATION
+# ============================================================================
+metrics:
+  # Which metrics to compute during evaluation
+  compute_wer: true  # Word Error Rate (primary metric)
+  compute_cer: true  # Character Error Rate
+  compute_bleu: true  # BLEU score (optional, slower)
+  compute_chrf: true  # chrF score (optional, slower)
+  
+  # Prediction logging
+  log_predictions: true  # Log sample predictions during evaluation
+  num_predictions_to_log: 5  # Number of samples to log
+
