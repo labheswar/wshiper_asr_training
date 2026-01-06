@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Training outputs
+logs/
+models/checkpoints/
+models/final/
+
+# Data (use external data source)
+data/audio/parquet_files/
+data/audio/*.parquet
+data/audio/*.csv
+data/audio/*.wav
+
+# Environment
+.env
+*.egg-info/
+.venv/
+venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

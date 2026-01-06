@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-01-06T10:28:13.452067",
+  "checkpoint_step": 200,
+  "epoch": 0.009077499148984454,
+  "checkpoint_save_time_seconds": 0.56,
+  "dataset": {
+    "train_samples": 352517,
+    "eval_samples": 39169,
+    "total_samples": 391686
+  },
+  "training_stats": {
+    "steps_completed": 200,
+    "epochs_completed": 0.01,
+    "total_epochs_planned": 100
+  },
+  "metrics": {
+    "loss": 1.3801,
+    "wer": 0.266,
+    "cer": 0.1116,
+    "bleu": 60.6162,
+    "chrf": 83.6009,
+    "runtime": 34527.9899,
+    "samples_per_second": 1.134,
+    "steps_per_second": 0.142
+  }
+}
